@@ -1,4 +1,4 @@
-function [U_func,F_conv,F_conv_wrapper,lb,ub,subref,selector] = makeGeneralizedVoigtModel(elasticSetting,fluidSetting,n_terms,timeVec,dt,st,minTimescale,advancedLog,forwardFitTimescale)
+function [U_func,F_conv,F_conv_wrapper,lb,ub,subref,selector] = makeGeneralizedVoigtModel(elasticSetting,fluidSetting,n_terms,timeVec,dt,st,minTimescale,forwardFitTimescale)
 %makeGeneralizedVoigtModel Create a Generalized Voigt function of variable
 %length
 %   This function takes a variety of settings and a number of terms, and
@@ -20,7 +20,6 @@ function [U_func,F_conv,F_conv_wrapper,lb,ub,subref,selector] = makeGeneralizedV
     selector = @(x) deal(x(1,:));
     
     % Limits for the parameters
-%     lbLimit = 1e-16;
     lbLimit = 1e-12;
     ubLimit = 10;
     convType = 'full';
@@ -51,15 +50,12 @@ function [U_func,F_conv,F_conv_wrapper,lb,ub,subref,selector] = makeGeneralizedV
         if iii == 1 && elasticSetting == 'y'
             compArms{iii} = sprintf('0');
         elseif iii == size(compArms,2) && fluidSetting == 'y'
-%             compArms{iii} = sprintf('inputs(:,1).*c(%d)',(iii-1)*2); % Rheodictic Term, t/eta_0 = t*phi_0 = t*tau_0
             compArms{iii} = sprintf('c(%d)',(iii-1)*2); % Changed to match Lopez et al. code (Github, Lib_rheology.py)
         else
             if strcmp(elasticSetting, 'y')
                 compArms{iii} = sprintf('(c(%d)./c(%d)).*exp( (-inputs(:,1))./c(%d) )',(iii-1)*2,(iii-1)*2+1,(iii-1)*2+1);
-%                 compArms{iii} = sprintf('c(%d)*(1-exp(-inputs(:,1)/c(%d)))',(iii-1)*2,(iii-1)*2+1); % Only works for unit step input
             else
                 compArms{iii} = sprintf('(c(%d)./c(%d)).*exp( (-inputs(:,1))./c(%d) )',(iii)*2-1,(iii)*2,(iii)*2);
-%                 compArms{iii} = sprintf('c(%d)*(1-exp(-inputs(:,1)/c(%d)))',(iii)*2-1,(iii)*2); % Only works for unit step input
             end
         end
     end
@@ -67,12 +63,6 @@ function [U_func,F_conv,F_conv_wrapper,lb,ub,subref,selector] = makeGeneralizedV
     % Create the voigt element series
     tempString1 = '(';
     for iii = 1:size(compArms,2)
-%         if iii == 1 && elasticSetting == 'y'
-%             if n_terms == 0
-%                 tempString1 = horzcat(tempString1, '0)');
-%             end
-%             continue;
-%         end
         if iii < size(compArms,2)
             tempString1 = horzcat(tempString1, sprintf('(%s)+',compArms{iii}));
         else
@@ -121,17 +111,11 @@ function [U_func,F_conv,F_conv_wrapper,lb,ub,subref,selector] = makeGeneralizedV
             U_func = str2func(retardanceString);
         end
     end
-    
-    if advancedLog
-        F_conv_wrapper = @(c,inputs) selector(log_scale_advanced_function(...
-            (F_conv(c,inputs)),...
-            inputs(:,1),dt,st));
-    else
-        F_conv_wrapper = @(c,inputs) log_scale(...
-            (F_conv(c,inputs)),...
-            inputs(:,1),dt,st);
-    end
-    
+
+    F_conv_wrapper = @(c,inputs) log_scale(...
+        (F_conv(c,inputs)),...
+        inputs(:,1),dt,st);
+        
     timescaleArray = [];
     for iii = 1:size(compArms,2)
     
