@@ -33,7 +33,7 @@ N = 2;                                  % INTEGER, Filter order for the Butterwo
 cutoff_Hz = 5e3;                        % DOUBLE, Butterworth cutoff frequency (if using, ignored if not)
 
 % Viscoelastic Model Settings
-n_terms_tot = 3;                        % Maximum number of terms to allow in the viscoelastic series
+n_terms_tot = 5;                        % Maximum number of terms to allow in the viscoelastic series
 elasticSetting = 'y';                   % ('y') include an elastic element in the generalized voigt model; ('n') exclude the element
 elasticSetting_maxwell = 'y';           % ('y') include an elastic element in the generalized maxwell model; ('n') exclude the element
 fluidSetting = 'n';                     % ('y') include a fluidity element in the generalized voigt model; ('n') exclude the element
