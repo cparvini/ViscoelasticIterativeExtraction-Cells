@@ -1346,7 +1346,7 @@ for iSims = 1:nSims
 
                             beta_dist_elastic(:,i) = betatemp;
                             beta0_dist_elastic(:,i) = beta0_elastic_array(i);
-                            resnorm_dist_elastic(i) = sum(((F_conv_wrapper_elastic(betatemp,x_fit_elastic)-y_fit_elastic).^2)./movvar(y_fit_elastic,3))./(length(y_fit_elastic)-length(betatemp)); % Standard Error of Regression (S)
+                            resnorm_dist_elastic(i) = sum(((F_conv_wrapper_elastic(betatemp,x_fit_elastic)-y_fit_elastic).^2)./movvar(y_fit_elastic,3))./(length(y_fit_elastic)-length(betatemp)); % Mean Squared Error (MSE)
                             
                             hbar.iterate(1) % Increase progressbar by 1 iteration
                         end
@@ -1671,7 +1671,7 @@ for iSims = 1:nSims
 
                             beta_dist(:,j) = betatemp';
                             beta0_dist(:,j) = beta0_conv_loop;
-                            resnorm_dist(j) = sum(((F_conv_func(betatemp,x_fit_loop)-y_fit_loop).^2)./movvar(y_fit_loop,3))./(length(y_fit_loop)-length(betatemp)); % Standard Error of Regression (S)
+                            resnorm_dist(j) = sum(((F_conv_func(betatemp,x_fit_loop)-y_fit_loop).^2)./movvar(y_fit_loop,3))./(length(y_fit_loop)-length(betatemp)); % Mean Squared Error (MSE)
 
                             if timeOperation
                                 Par.tic;
@@ -1686,7 +1686,7 @@ for iSims = 1:nSims
 
                             beta_dist_maxwell(:,j) = betatemp';
                             beta0_dist_maxwell(:,j) = beta0_maxwell_loop;
-                            resnorm_dist_maxwell(j) = sum(((h_maxwell_func(betatemp,maxwellInputs_loop)-y_fit_maxwell_loop).^2)./movvar(y_fit_maxwell_loop,3))./(length(y_fit_maxwell_loop)-length(betatemp)); % Standard Error of Regression (S)
+                            resnorm_dist_maxwell(j) = sum(((h_maxwell_func(betatemp,maxwellInputs_loop)-y_fit_maxwell_loop).^2)./movvar(y_fit_maxwell_loop,3))./(length(y_fit_maxwell_loop)-length(betatemp)); % Mean Squared Error (MSE)
 
                             if timeOperation
                                 % Track memory
@@ -2035,7 +2035,7 @@ for iSims = 1:nSims
 
                         beta_dist(:,j) = betatemp';
                         beta0_dist(:,j) = beta0_conv_loop;
-                        resnorm_dist(j) = sum(((F_conv_func(betatemp,x_fit)-y_fit).^2)./movvar(y_fit,3))./(length(y_fit)-length(betatemp)); % Standard Error of Regression (S)
+                        resnorm_dist(j) = sum(((F_conv_func(betatemp,x_fit)-y_fit).^2)./movvar(y_fit,3))./(length(y_fit)-length(betatemp)); % Mean Squared Error (MSE)
 
                         if timeOperation
                             Par.tic;
@@ -2050,7 +2050,7 @@ for iSims = 1:nSims
 
                         beta_dist_maxwell(:,j) = betatemp';
                         beta0_dist_maxwell(:,j) = beta0_maxwell_loop;
-                        resnorm_dist_maxwell(j) = sum(((h_maxwell_func(betatemp,maxwellInputs)-y_fit_maxwell).^2)./movvar(y_fit_maxwell,3))./(length(y_fit_maxwell)-length(betatemp)); % Standard Error of Regression (S)
+                        resnorm_dist_maxwell(j) = sum(((h_maxwell_func(betatemp,maxwellInputs)-y_fit_maxwell).^2)./movvar(y_fit_maxwell,3))./(length(y_fit_maxwell)-length(betatemp)); % Mean Squared Error (MSE)
 
                         if timeOperation
                             % Track memory
