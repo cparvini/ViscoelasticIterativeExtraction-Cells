@@ -33,7 +33,7 @@ N = 2;                                  % INTEGER, Filter order for the Butterwo
 cutoff_Hz = 5e3;                        % DOUBLE, Butterworth cutoff frequency (if using, ignored if not)
 
 % Viscoelastic Model Settings
-n_terms_tot = 5;                        % Maximum number of terms to allow in the viscoelastic series
+n_terms_tot = 4;                        % Maximum number of terms to allow in the viscoelastic series
 elasticSetting = 'y';                   % ('y') include an elastic element in the generalized voigt model; ('n') exclude the element
 elasticSetting_maxwell = 'y';           % ('y') include an elastic element in the generalized maxwell model; ('n') exclude the element
 fluidSetting = 'n';                     % ('y') include a fluidity element in the generalized voigt model; ('n') exclude the element
@@ -1293,7 +1293,63 @@ for iSims = 1:nSims
         if timeOperation
             fitSwitchStartTime(iSims,i_loop) = toc;
         end
+        
+        % For the sake of comparison, we will define an
+        % anonymous function that represents the Hertzian
+        % solution.
+        F_hertz = @(E,h) (4*sqrt(r_tip)/(3*(1-nu_sample^2))).*E.*(h.^(1.5));
+        if fitLog
+            x_fit_hertz = log_scale(maxwellInputs(:,2),x_fit(:,1),dt,st);
+            y_fit_hertz = log_scale(x_fit(:,2),x_fit(:,1),dt,st);
+        else
+            x_fit_hertz = maxwellInputs(:,2);
+            y_fit_hertz = x_fit(:,2);
+        end
+        
+        beta_dist_hertz = zeros(1,n_samples);
+        beta0_dist_hertz = zeros(size(beta_dist_hertz));
+        resnorm_dist_hertz = zeros(1,n_samples);
 
+        ub_hertz = 1e12;
+        lb_hertz = 1e0;
+        ub_rand_hertz = log10(ub_hertz)-1;
+        lb_rand_hertz = log10(lb_hertz)+1;
+        beta0_hertz_array = logspace(ub_rand_hertz,lb_rand_hertz,n_samples);
+
+        progressString = sprintf('Investigating Hertzian Model\nParallel Search Running...');
+        hbar = parfor_progressbar(n_samples,progressString);
+        warning('off');
+
+        parfor i = 1:n_samples
+            lsqoptions = optimoptions('lsqcurvefit','Algorithm','trust-region-reflective',...
+                'MaxFunctionEvaluations', n_maxIterations,...
+                'MaxIterations', n_maxIterations,...
+                'FiniteDifferenceType','central',...
+                'FunctionTolerance', 0,...
+                'OptimalityTolerance', 0,...
+                'StepTolerance', scaling,...
+                'Display', 'none');
+
+            [betatemp,resnorm,residual,exitflag,output,lambda,jacobian] = ...
+                lsqcurvefit(F_hertz,beta0_hertz_array(i),x_fit_hertz,y_fit_hertz,lb_hertz,ub_hertz,lsqoptions);
+
+            beta_dist_hertz(:,i) = betatemp;
+            beta0_dist_hertz(:,i) = beta0_hertz_array(i);
+            resnorm_dist_hertz(i) = sum(((F_hertz(betatemp,x_fit_hertz)-y_fit_hertz).^2)./(movvar(y_fit_hertz,3).^2))./(length(y_fit_hertz)-length(betatemp)); % Mean Squared Error (MSE)
+
+            hbar.iterate(1) % Increase progressbar by 1 iteration
+        end
+
+        close(hbar)
+        warning('on');
+
+        resnorm_dist_hertz_temp = resnorm_dist_hertz;
+        resnorm_dist_hertz_temp(resnorm_dist_hertz_temp == 0) = NaN;
+        [~,idx] = min(resnorm_dist_hertz_temp,[],'omitnan');
+        hertzianModulus = beta_dist_hertz(:,idx);
+        dataStruct(indShift+i_loop).hertzianModulus = hertzianModulus;
+        fprintf('For Load Level %d, the Hertz Model predicts Ee = %1.4g Pa\n\n',i_loop,hertzianModulus);
+        
         % Jump into the switch-case that controls whether the "open" or
         % "iterative" parameter search method is used.
         switch lower(fitMethod)
@@ -1376,7 +1432,7 @@ for iSims = 1:nSims
                         end
                     end
                 end
-
+                
                 if timeOperation
                     iterativeFitStartTime(iSims,i_loop) = toc;
                 end
