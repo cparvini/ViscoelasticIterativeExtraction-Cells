@@ -101,7 +101,7 @@ function [U_func,F_conv,F_conv_wrapper,lb,ub,subref,selector] = makeGeneralizedV
             end
         end
     else
-        compString = '@(c,inputs) zeros(size(inputs(:,2)))';
+        compString = '@(c,inputs) c(1).*inputs(:,2)';
         F_conv = str2func(compString);
         if strcmp(elasticSetting, 'y')
             retardanceString = sprintf('@(c,inputs) c(1).*ones(size(inputs(:,2)))');

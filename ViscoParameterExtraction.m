@@ -1296,8 +1296,9 @@ for iSims = 1:nSims
         
         % For the sake of comparison, we will define an
         % anonymous function that represents the Hertzian
-        % solution.
-        F_hertz = @(E,h) (4*sqrt(r_tip)/(3*(1-nu_sample^2))).*E.*(h.^(1.5));
+        % solution. Note that the hdata fed in here will already be scaled
+        % (i.e. h^(3/2)) so it is not scaled inside F_hertz().
+        F_hertz = @(E,hdata) (4*sqrt(r_tip)/(3*(1-nu_sample^2))).*E.*(hdata);
         if fitLog
             x_fit_hertz = log_scale(maxwellInputs(:,2),x_fit(:,1),dt,st);
             y_fit_hertz = log_scale(x_fit(:,2),x_fit(:,1),dt,st);
@@ -1349,6 +1350,30 @@ for iSims = 1:nSims
         hertzianModulus = beta_dist_hertz(:,idx);
         dataStruct(indShift+i_loop).hertzianModulus = hertzianModulus;
         fprintf('For Load Level %d, the Hertz Model predicts Ee = %1.4g Pa\n\n',i_loop,hertzianModulus);
+
+        % Uncomment the code below if you would like to visualize the
+        % Hertzian model for your dataset
+%         if exist('hertzPlot','var')
+%             try
+%                 figure(hertzPlot)
+%                 clf
+%             catch
+%                 clearvars hertzPlot
+%                 hertzPlot = figure;
+%             end
+%         else
+%             hertzPlot = figure;
+%         end
+%         plot(x_fit_hertz,y_fit_hertz,'r-','linewidth',4)
+%         hold on
+%         plot(x_fit_hertz,F_hertz(hertzianModulus,x_fit_hertz),'b-','linewidth',2)
+%         xlabel('$h^{3/2}$ [m]','interpreter','latex')
+%         ylabel('$Force$ [N]','interpreter','latex')
+%         title(sprintf('Hertzian Model Fit for Load Level %d',i_loop))
+%         grid on
+%         hold off
+%         saveas(hertzPlot,[pathname sprintf('/HertzEstimate-LoadLevel_%d',i_loop)],'fig')
+%         saveas(hertzPlot,[pathname sprintf('/HertzEstimate-LoadLevel_%d',i_loop)],'jpg')
         
         % Jump into the switch-case that controls whether the "open" or
         % "iterative" parameter search method is used.
@@ -1422,6 +1447,7 @@ for iSims = 1:nSims
                         resnorm_dist_elastic_temp(resnorm_dist_elastic_temp == 0) = NaN;
                         [~,idx] = min(resnorm_dist_elastic_temp,[],'omitnan');
                         bestElasticTerm = beta_dist_elastic(:,idx);
+                        dataStruct(indShift+i_loop).bestElasticTerm = bestElasticTerm;
 
                     else
                         if timeOperation
