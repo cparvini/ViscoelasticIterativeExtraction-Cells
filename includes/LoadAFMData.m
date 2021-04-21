@@ -365,7 +365,8 @@ for k = 1:length(Files)
                 else
                     dataStruct(k).z = zApproach(dataError_pos+buffer:end)*(1e-6);
                     dataStruct(k).d = approachDefl(dataError_pos+buffer:end)*(1e-9);
-                    dataStruct(k).t = time(1:(end-dataError_pos+buffer));
+%                     dataStruct(k).t = time(1:(dataError_pos+buffer)+1);
+                    dataStruct(k).t = time(1:length(dataStruct(k).d));
                     dataStruct(k).dt = dt;
                     dataStruct(k).n_sam = length(dataStruct(k).t);
                 end
@@ -377,8 +378,13 @@ for k = 1:length(Files)
             
     end
     
+    % Save velocity
+    dataStruct(k).v_approach = v_approach(k);
+    dataStruct(k).point_number = point_number(k);
+    dataStruct(k).run_number = run_number(k);
+    
     % Pre-Processing
-    % Find the approach portion of the data    
+    % Find the approach portion of the data
     [~, z_max_ind] = max(dataStruct(k).z);
     
     % Make sure we are handling row vectors
@@ -526,8 +532,8 @@ for k = 1:length(Files)
     dt = dataStruct(k).dt;
     
     % Create a "clean" repulsive time array
-    t_rep = linspace(0,(n_offset-1)*dt,n_offset);
-    t_rep_smooth = linspace(0,(n_offset_smooth-1)*dt,n_offset_smooth);
+    t_rep = linspace(0,(n_offset-1)*dt,n_offset)';
+    t_rep_smooth = linspace(0,(n_offset_smooth-1)*dt,n_offset_smooth)';
 
     % Store the repulsive z-sensor and deflection for normal and smooth
     % cases.
@@ -726,7 +732,7 @@ if length(Files) > 1
             minRepFile = fileInds(temp);
             [endNum,~] = min(maxVal(velInd==1));
                         
-            xi = startNum:median(dtVal):endNum;  % Create Vector Of Common time values
+            xi = (startNum:median(dtVal):endNum)';  % Create Vector Of Common time values
             di = [];
             zi = [];
             ti = [];
@@ -755,7 +761,7 @@ if length(Files) > 1
                             xi(:), 'linear', NaN)); % Interploate z-sensor to new �x� Values
 
                         % Create an associated time array for averaging
-                        ti =  vertcat(ti, xi);
+                        ti =  horzcat(ti, xi);
                         
                         % Hold on to the data lengths so we can keep track
                         % of which files are worst and should be ignored.
@@ -807,10 +813,10 @@ if length(Files) > 1
             % Average this load level's curves.
             % Interpolate according to the variance in the time array that
             % comes from averaging the results.
-            t_interp = (1:size(ti,2))*median(dtVal);
-            z_interp = interp1(mean(ti,1), mean(zi,1),...
+            t_interp = (1:size(ti,1))*median(dtVal)';
+            z_interp = interp1(mean(ti,2), mean(zi,2),...
                     t_interp, 'linear', NaN); % Interploate To New Time Values
-            d_interp = interp1(mean(ti,1), mean(di,1),...
+            d_interp = interp1(mean(ti,2), mean(di,2),...
                     t_interp, 'linear', NaN); % Interploate To New Time Values
             
             nanCheck = isnan(reshape(t_interp,length(t_interp),1)) +...
