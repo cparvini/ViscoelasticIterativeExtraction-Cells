@@ -17,8 +17,7 @@ clc
 % specific timescales.
 % ======================== %
 
-addpath(genpath([pwd '/includes']))
-addpath data
+addpath(genpath(pwd))
 
 %% Settings for Data Analysis
 % Get Experiment Settings 
