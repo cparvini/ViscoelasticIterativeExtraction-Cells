@@ -2370,11 +2370,6 @@ for iSims = 1:nSims
             fitSwitchEndTime(iSims,i_loop) = toc;
         end
 
-        if strcmp(avAnalysis,'i')
-            save([pathname sprintf('/%s-dataStruct-%d_terms-%s.mat',savePrepend,n_terms,saveLabel)],'dataStruct')
-            fprintf('\nSaved the dataStruct to an m-file for %d terms on File No. %d\n',n_terms,i_loop);
-        end
-
         fprintf(fid,'\r\n\r\n=================\r\n\r\n');
 
     end % End loopInd
@@ -2388,6 +2383,11 @@ for iSims = 1:nSims
     if strcmp(avAnalysis,'a')
         save([pathname sprintf('/%s-dataStruct-%d_terms-average.mat',savePrepend,n_terms)],'dataStruct')
         fprintf('\nSaved the dataStruct to an m-file for %d terms and all velocities.\n',n_terms);
+    elseif strcmp(avAnalysis,'i')
+        save([pathname sprintf('/%s-dataStruct-%d_terms-individual.mat',savePrepend,n_terms)],'dataStruct')
+        fprintf('\nSaved the dataStruct to an m-file for %d terms and all Files.\n',n_terms);
+    else
+        error('Incorrect analysis setting. Please use "a" or "i" for averaged or individual curve analysis.');
     end
             
 end % End iVoigt loop
