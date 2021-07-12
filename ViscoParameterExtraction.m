@@ -44,10 +44,17 @@ for i_dir = 1:length(Folders)
     clc
     fprintf('Analyzing Directory #%d of %d\n',i_dir,length(Folders));
     
-    % Clean up the workers (memory management)
+    % Clean up the workers (memory management). There is currently NO way
+    % to do this in Matlab and free up the allocated memory without
+    % restarting the pool entirely. Note this will incur overhead with each
+    % folder iteration, but this is mandatory for systems with restricted
+    % memory otherwise Matlab will begin killing worker processes to free
+    % up room for the ever-expanding memory requirements of the parallel
+    % pool.
     if ~isempty(gcp('nocreate'))
+        % Delete Parallel Pool of MATLAB Workers
         poolobj = gcp('nocreate');
-        parfevalOnAll(poolobj, @clearvars, 0);
+        delete(poolobj);
     end
     
     % Use the current folder
@@ -1353,22 +1360,30 @@ for i_dir = 1:length(Folders)
             warning('off');
 
             parfor i = 1:n_samples
-                lsqoptions = optimoptions('lsqcurvefit','Algorithm','trust-region-reflective',...
-                    'MaxFunctionEvaluations', n_maxIterations,...
-                    'MaxIterations', n_maxIterations,...
-                    'FiniteDifferenceType','central',...
-                    'FunctionTolerance', 0,...
-                    'OptimalityTolerance', 0,...
-                    'StepTolerance', scaling,...
-                    'Display', 'none');
+                try
+                    lsqoptions = optimoptions('lsqcurvefit','Algorithm','trust-region-reflective',...
+                        'MaxFunctionEvaluations', n_maxIterations,...
+                        'MaxIterations', n_maxIterations,...
+                        'FiniteDifferenceType','central',...
+                        'FunctionTolerance', 0,...
+                        'OptimalityTolerance', 0,...
+                        'StepTolerance', scaling,...
+                        'Display', 'none');
 
-                [betatemp,resnorm,residual,exitflag,output,lambda,jacobian] = ...
-                    lsqcurvefit(F_hertz,beta0_hertz_array(i),x_fit_hertz,y_fit_hertz,lb_hertz,ub_hertz,lsqoptions);
+                    betatemp = ...
+                        lsqcurvefit(F_hertz,beta0_hertz_array(i),x_fit_hertz,y_fit_hertz,lb_hertz,ub_hertz,lsqoptions);
 
-                beta_dist_hertz(:,i) = betatemp;
-                beta0_dist_hertz(:,i) = beta0_hertz_array(i);
-                resnorm_dist_hertz(i) = sum(((F_hertz(betatemp,x_fit_hertz)-y_fit_hertz).^2)./(movvar(y_fit_hertz,3).^2))./(length(y_fit_hertz)-length(betatemp)); % Unweighted Mean Square of the Weighted Deviations (unweighted MSWD)
+                    beta_dist_hertz(:,i) = betatemp;
+                    beta0_dist_hertz(:,i) = beta0_hertz_array(i);
+                    resnorm_dist_hertz(i) = sum(((F_hertz(betatemp,x_fit_hertz)-y_fit_hertz).^2)./(movvar(y_fit_hertz,3).^2))./(length(y_fit_hertz)-length(betatemp)); % Unweighted Mean Square of the Weighted Deviations (unweighted MSWD)
+                catch ERROR
+                    beta_dist_hertz(:,i) = NaN;
+                    beta0_dist_hertz(:,i) = NaN;
+                    resnorm_dist_hertz(i) = NaN;
 
+                    fprintf('\nHertz Search: Entered a NaN Row for loop #%d because there was an ERROR inside the parfor loop:\n',i);
+                    disp(ERROR.message)
+                end
                 hbar.iterate(1) % Increase progressbar by 1 iteration
             end
 
@@ -1444,22 +1459,30 @@ for i_dir = 1:length(Folders)
                             warning('off');
 
                             parfor i = 1:n_samples
-                                lsqoptions = optimoptions('lsqcurvefit','Algorithm','trust-region-reflective',...
-                                    'MaxFunctionEvaluations', n_maxIterations,...
-                                    'MaxIterations', n_maxIterations,...
-                                    'FiniteDifferenceType','central',...
-                                    'FunctionTolerance', 0,...
-                                    'OptimalityTolerance', 0,...
-                                    'StepTolerance', scaling,...
-                                    'Display', 'none');
+                                try
+                                    lsqoptions = optimoptions('lsqcurvefit','Algorithm','trust-region-reflective',...
+                                        'MaxFunctionEvaluations', n_maxIterations,...
+                                        'MaxIterations', n_maxIterations,...
+                                        'FiniteDifferenceType','central',...
+                                        'FunctionTolerance', 0,...
+                                        'OptimalityTolerance', 0,...
+                                        'StepTolerance', scaling,...
+                                        'Display', 'none');
 
-                                [betatemp,resnorm,residual,exitflag,output,lambda,jacobian] = ...
-                                    lsqcurvefit(F_conv_wrapper_elastic,beta0_elastic_array(i),x_fit_elastic,y_fit_elastic,lb_elastic,ub_elastic,lsqoptions);
+                                    betatemp = ...
+                                        lsqcurvefit(F_conv_wrapper_elastic,beta0_elastic_array(i),x_fit_elastic,y_fit_elastic,lb_elastic,ub_elastic,lsqoptions);
 
-                                beta_dist_elastic(:,i) = betatemp;
-                                beta0_dist_elastic(:,i) = beta0_elastic_array(i);
-                                resnorm_dist_elastic(i) = sum(((F_conv_wrapper_elastic(betatemp,x_fit_elastic)-y_fit_elastic).^2)./(movvar(y_fit_elastic,3).^2))./(length(y_fit_elastic)-length(betatemp)); % Unweighted Mean Square of the Weighted Deviations (unweighted MSWD)
+                                    beta_dist_elastic(:,i) = betatemp;
+                                    beta0_dist_elastic(:,i) = beta0_elastic_array(i);
+                                    resnorm_dist_elastic(i) = sum(((F_conv_wrapper_elastic(betatemp,x_fit_elastic)-y_fit_elastic).^2)./(movvar(y_fit_elastic,3).^2))./(length(y_fit_elastic)-length(betatemp)); % Unweighted Mean Square of the Weighted Deviations (unweighted MSWD)
+                                catch ERROR
+                                    beta_dist_elastic(:,i) = NaN;
+                                    beta0_dist_elastic(:,i) = NaN;
+                                    resnorm_dist_elastic(i) = NaN;
 
+                                    fprintf('\Elastic Term Search: Entered a NaN Row for loop #%d because there was an ERROR inside the parfor loop:\n',i);
+                                    disp(ERROR.message)
+                                end
                                 hbar.iterate(1) % Increase progressbar by 1 iteration
                             end
 
