@@ -23,7 +23,8 @@ originalPath = uigetdir(pwd,'Select the Directory to Analyze');
 savePrependIn = input('Please enter a label for your output files','s');
 
 % Find the subdirectories
-% NOTE: originalPath must be sent by the SLURM script
+% NOTE: originalPath must be sent by the SLURM script, or manually set as
+% it is above when executing locally.
 dirContents = dir(originalPath);
 subFolders = dirContents([dirContents.isdir]);
 subFolders(contains({subFolders.name}, {'.','..'})) = [];
