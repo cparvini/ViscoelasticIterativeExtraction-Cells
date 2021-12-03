@@ -19,7 +19,7 @@ else
         tauInds = (2:2:length(beta)-1);
         modulusInds = (1:2:length(beta)-1);
     else
-        tauInds = (2:2:length(ub_loop));
+        tauInds = (2:2:length(beta));
         modulusInds = (1:2:length(beta));
     end
 end
